@@ -103,240 +103,161 @@ Porque depende de detalhes privados, aumenta acoplamento e incentiva core creep.
 </details>
 
 ## Aplicar
+### Recomendar um estilo para o motor de regras de reajuste
 
 **Objetivo**
 
-Executar o comparador didático de estilos e explicar por que sua saída é uma evidência parcial, não uma decisão automática.
+Recomendar um entre quatro estilos arquiteturais para um componente descrito, declarando o que cada um ganha, o que cobra e qual atributo de qualidade decide.
 
 **Situação**
 
-Uma capacidade administrativa possui validação comum e etapa opcional por unidade; a regra varia mensalmente.
+Uma operadora de saúde calcula o reajuste anual dos contratos coletivos. O cálculo aplica uma sequência de regras: índice legal do ano, faixa etária dos beneficiários, sinistralidade do contrato, descontos negociados e arredondamento contratual. Hoje tudo isso vive num único método de 900 linhas, dentro do serviço que emite o boleto.
+
+Quando a lei muda o índice, alguém edita esse método. Quando um cliente grande negocia um desconto diferente, alguém acrescenta um `if`. O time perdeu a conta de quantas regras existem, e ninguém consegue dizer, olhando um cálculo pronto, quais regras foram aplicadas e em que ordem.
+
+A diretoria pediu uma recomendação de estrutura antes da próxima virada de índice.
+
+Seis fatos foram apurados na operadora:
+
+1. O índice legal muda uma vez por ano; descontos negociados mudam várias vezes por ano.
+2. A equipe tem seis pessoas e faz uma implantação por semana, com tudo junto.
+3. A auditoria exige saber, para cada cálculo já emitido, quais regras foram aplicadas e em que ordem.
+4. O volume é de alguns milhares de cálculos por dia, sem pico previsto.
+5. Acrescentar uma regra hoje exige alterar o método e reimplantar o sistema inteiro.
+6. Ninguém pediu para trocar uma regra com o sistema no ar.
+
+As quatro alternativas em avaliação:
+
+| Alternativa | O que muda na estrutura |
+| --- | --- |
+| **A. Camadas** | O cálculo vira um serviço de domínio na camada de negócio, chamado pela camada de aplicação. Uma classe por grupo de regras, todas dentro do mesmo serviço. |
+| **B. Pipes and Filters** | Cada regra vira um filtro independente. O cálculo é a passagem do contrato por uma sequência de filtros, e cada filtro registra o que alterou. |
+| **C. Microkernel** | Um núcleo estável executa o cálculo e consulta um registro de regras. Cada regra é um plugin que se declara ao núcleo por um contrato fixo. |
+| **D. Monólito modular** | O motor de regras vira um módulo com fronteira verificada na esteira de integração, dentro da mesma implantação, com interface própria. |
 
 **Seu papel**
 
-Você transforma a necessidade em forças verificáveis e interpreta a execução.
-
-**Artefato que você irá usar**
-
-Em `laboratorios/plataforma-hospitalar`, `src/hospital/estilos.py` compara quatro estilos por forças, limites e evidências. `tests/test_estilos.py` verifica o comparador. Não há dados reais ou conexão externa.
-
-**Insumos disponíveis**
-
-Use o código, seus testes, a [oficina](oficina-de-ferramentas.md) e o [template de ADR](../referencia/template-adr.md).
-
-**Antes de executar**
-
-Abra o terminal em `laboratorios/plataforma-hospitalar`. Siga a preparação da [oficina](oficina-de-ferramentas.md) até existir `.venv` e `python --version` e `python -m pytest --version` funcionarem. Leia os dois arquivos: o comparador recebe prioridades e retorna uma lista; não mede produção.
-
-**Como conduzir**
-
-Verifique o ambiente, registre a execução e só então argumente.
+Você é a pessoa arquiteta chamada para recomendar a estrutura. A equipe implementa depois, e espera de você a escolha, a justificativa e os riscos.
 
 **O que fazer**
 
-1. Crie `evidencias` na raiz do laboratório.
-2. Execute `python -m pytest tests/test_estilos.py -q` e guarde a saída em `evidencias/testes-estilos.txt` conforme a oficina.
-3. Crie `evidencias/comparacao.py` para prioridades `modificabilidade` e `extensibilidade`; importe e imprima `comparar_estilos`.
-4. Registre primeira alternativa, força, limite, evidência e um cenário com estímulo, resposta e medida.
-5. Copie o [template de ADR](../referencia/template-adr.md) para `evidencias/ADR-001-estilo-inicial.md` e registre alternativas, consequência e revisão.
+Escreva em prosa, uma resposta por item. Não é preciso desenhar nada.
+
+1. Recomende um dos quatro estilos para a operadora, em uma frase.
+2. Sobre cada um dos quatro, escreva duas frases: o que ele resolve do problema descrito e o que ele cobra em troca.
+3. Diga qual dos seis fatos pesou mais na sua recomendação, e por quê.
+4. Aponte o estilo que você descartaria de imediato e diga qual fato o derruba.
+5. Escreva o que pode dar errado com a sua recomendação e o sinal que faria a operadora trocar de estilo. Data no calendário não vale como sinal.
 
 **Evidência esperada**
 
-`3 passed`, script, saída e ADR. Microkernel pode surgir primeiro, mas a tabela não substitui o limite de compatibilidade de plugins.
-
-**Entrega esperada**
-
-Entregue `evidencias` e um parágrafo sobre o que o comparador não mede.
-
-**Critérios de avaliação**
-
-| Critério | Percentual | Evidência e insuficiência |
-| --- | ---: | --- |
-| Execução reproduzível | 25% | Evidência: comando, saída e cenário; insuficiência: arquivo sem contexto. |
-| Cenário de qualidade | 25% | Evidência: estímulo, resposta e medida; insuficiência: qualidade vaga. |
-| Comparação responsável | 30% | Evidência: força e limite ligados; insuficiência: tabela tratada como oráculo. |
-| Decisão revisável | 20% | Evidência: consequência e gatilho; insuficiência: ADR sem revisão. |
+O artefato traz o quadro comparativo completo, com ganho e custo declarados para os quatro estilos, a recomendação em uma frase, o cenário de qualidade com medida, o fato que sustenta a escolha, o risco aceito e o sinal de revisão como condição observável.
 
 ## Analisar
-
 **Objetivo**
 
-Decompor uma integração de dados em forças, etapas, fronteiras e hipóteses antes de escolher uma organização.
+Decompor as forças de uma integração antes de comparar estruturas, e dizer o que cada estrutura resolve e o que ela cobra.
 
 **Situação**
 
-Uma rede de laboratórios possui dezoito parceiros que enviam JSON, CSV ou XML para uma central. Há quatro milhões de registros por dia, pico de seiscentos por segundo, mudanças mensais de layout, repetições e atrasos. Cada rejeição precisa indicar origem, versão, transformação e motivo; lote aceito em até vinte minutos.
+Uma rede de laboratórios recebe resultados de dezoito parceiros numa central. Cada parceiro envia no formato que já usa: uns mandam JSON, outros CSV, outros XML. São quatro milhões de registros por dia, com pico de seiscentos por segundo no fim da tarde, quando os laboratórios fecham o expediente.
+
+O mesmo registro às vezes chega duas vezes, e às vezes chega horas atrasado. Os parceiros mudam o layout do arquivo cerca de uma vez por mês, quase sempre sem avisar antes.
+
+Quando a central rejeita um registro, ela precisa dizer de qual parceiro veio, em que versão de layout, qual transformação falhou e por quê. Um lote precisa ser aceito em até vinte minutos.
+
+Hoje tudo isso acontece num programa único que ninguém quer mais tocar.
+
+Os seis fatos, as quatro estruturas e as exigências de rejeição e de prazo, todos descritos nesta página.
 
 **Seu papel**
 
-Você separa fatos, premissas e hipóteses antes de defender estrutura.
-
-**Artefato que você irá usar**
-
-Use o enunciado, [atributos de qualidade](../referencia/atributos-de-qualidade.md) e Mermaid. Considere três exemplos por formato, duas repetições, um atraso e duas versões; use códigos fictícios.
-
-**Insumos disponíveis**
-
-O enunciado fornece volume, formatos, mudança e prazo; Mermaid registra componentes e conectores sem instalar mensageria.
-
-**Antes de executar**
-
-No terminal aberto na raiz do repositório `arquitetura-software`, crie `entregas/unidade-1/analise-integracao/` com `forcas.md`, `alternativas.md` e `fluxo.md`. Leia [conceitos](conceitos.md). Aqui, executar é elaborar e revisar arquivos, não iniciar uma API.
-
-**Condição inicial verificável**
-
-A pasta `entregas/unidade-1/analise-integracao` existe, contém os três arquivos vazios e `fluxo.md` abre em editor com Mermaid.
-
-**Como conduzir**
-
-Comece pelas forças; o diagrama é consequência da decomposição.
+Você conduz a análise antes de qualquer decisão de estrutura. Separar o que é fato do que é suposição sua faz parte do trabalho.
 
 **O que fazer**
 
-1. Em `entregas/unidade-1/analise-integracao/forcas.md`, classifique throughput, variação, ordenação, deduplicação, rastreabilidade e operação.
-2. Escreva três cenários mensuráveis.
-3. Em `alternativas.md`, modele duas decomposições e nomeie componentes, conectores e estado.
-4. Compare os quatro estilos por ganho, limite e evidência.
-5. Em `fluxo.md`, desenhe Mermaid e uma falha parcial, ambos com leitura textual.
-6. Registre três hipóteses e experimentos.
+Escreva em prosa, uma resposta por item.
+
+1. Das seis exigências apuradas, escolha as três que mais restringem a estrutura e explique, em uma frase cada, por que restringem.
+2. Sobre cada uma das quatro estruturas, escreva duas frases: o que ela resolve e o que ela cobra em troca.
+3. A exigência 5 pede rastrear parceiro, versão, transformação e motivo em cada rejeição. Diga qual das quatro estruturas torna isso mais barato, e por quê.
+4. Aponte a estrutura que você descartaria de imediato e diga qual fato a derruba.
+5. Escreva uma afirmação sua que os seis fatos não sustentam, rotule-a como suposição e diga que dado a confirmaria. Se faltar algum dado que você considera necessário para julgar, escreva a pergunta que faria à central antes de fechar a análise.
 
 **Evidência esperada**
 
-Os arquivos tratam repetição, atraso e rejeição; o diagrama identifica produtor, conector e registro de rejeição.
-
-**Entrega esperada**
-
-Entregue `entregas/unidade-1/analise-integracao/` com os três arquivos, até mil palavras e uma lacuna de medição.
-
-**Critérios de avaliação**
-
-| Critério | Percentual | Evidência e insuficiência |
-| --- | ---: | --- |
-| Decomposição de forças e etapas | 25% | Evidência: força ligada a etapa; insuficiência: lista isolada. |
-| Comparação simétrica | 30% | Evidência: mesmas forças e limites; insuficiência: favorecimento sem contraste. |
-| Coerência de modelos | 25% | Evidência: elementos e texto concordam; insuficiência: seta sem leitura. |
-| Hipóteses verificáveis | 20% | Evidência: hipótese com experimento; insuficiência: suposição como fato. |
+O arquivo entregue liga cada exigência escolhida a uma consequência de estrutura, traz ganho e custo das quatro estruturas, e separa o que foi apurado do que você supôs, registrando o dado que confirmaria a suposição.
 
 ## Avaliar
-
 **Objetivo**
 
-Avaliar propostas concorrentes com critérios mensuráveis, evidência incompleta e uma recomendação que possa ser revisada.
+Julgar duas propostas concorrentes com critérios declarados antes da escolha, dizendo o que a evidência disponível sustenta e o que ela não alcança.
 
 **Situação**
 
-Uma secretaria consolida disponibilidade de leitos de 45 hospitais. Há JSON a cada 30 segundos, CSV a cada cinco minutos, pico de 900 atualizações por minuto, repetições, atrasos e contradições. O painel atualiza em 60 segundos; auditoria explica fonte, versão, transformação e desempate.
+Uma secretaria estadual consolida a disponibilidade de leitos de 45 hospitais num painel público. Alguns hospitais enviam JSON a cada trinta segundos; outros enviam CSV a cada cinco minutos. No horário de maior movimento chegam novecentas atualizações por minuto.
+
+Os dados brigam entre si. O mesmo hospital às vezes manda a mesma atualização duas vezes, às vezes manda com atraso, e às vezes duas fontes do mesmo hospital discordam sobre quantos leitos estão livres. O painel precisa refletir a realidade em até sessenta segundos, e a auditoria precisa saber, para cada número exibido, de qual fonte ele veio, em que versão, que transformação sofreu e como o desempate foi feito.
+
+Duas equipes apresentaram propostas.
+
+#### Proposta A
+
+Um caminho comum para todos os hospitais, com conectores finos na entrada e um modelo de dados único no meio. Toda regra de desempate vive num lugar só.
+
+#### Proposta B
+
+Um coletor por hospital, cada um com a própria regra de leitura e de desempate, gravando num repositório comum já no formato final.
+
+As duas propostas, a amostra descrita e a lista do que foi medido e do que não foi, todos nesta página.
 
 **Seu papel**
 
-Você pode recomendar, rejeitar ou propor experimento limitado; não há resposta aprovada.
-
-**Artefato que você irá usar**
-
-Use `<raiz-do-clone>/entregas/unidade-1/avaliacao-leitos/parecer.md`. A mantém conectores e modelo comum; B usa coletor por parceiro. Há equipe e amostra de atualizações, cinquenta repetições, vinte atrasos e cinco contradições; não há medições de carga, custo ou inclusão.
-
-**Insumos disponíveis**
-
-Use propostas, amostra, equipe e [padrões e decisões](padroes-e-decisoes.md). Ausência de medida delimita a conclusão.
-
-**Antes de executar**
-
-No terminal aberto na raiz do repositório `arquitetura-software`, crie `entregas/unidade-1/avaliacao-leitos/parecer.md` com “critério”, “medida”, “evidência”, “lacuna” e “impacto”. Não escolha antes dos critérios.
-
-**Condição inicial verificável**
-
-A pasta `entregas/unidade-1/avaliacao-leitos` existe e `parecer.md` contém a tabela vazia. A amostra do enunciado está disponível; não inicie software adicional.
-
-**Como conduzir**
-
-Preencha a tabela antes da conclusão.
+Você emite o parecer que o comitê vai ler. Pode aprovar uma proposta, recusar as duas ou adiar com uma condição escrita.
 
 **O que fazer**
 
-1. Crie critérios para atualização, formato, repetição, atraso, auditoria e operação.
-2. Marque evidência disponível, ausente ou contraditória.
-3. Relacione cada proposta a estilos possíveis e consequências.
-4. Recomende, rejeite ou adie com condição de revisão.
-5. Descreva duas experiências e a objeção mais forte.
-6. Se uma medida necessária estiver ausente, adie a recomendação e registre a experiência que produziria essa medida.
+Escreva em prosa, uma resposta por item.
+
+1. Declare de três a cinco critérios de julgamento e diga qual deles pesa mais para uma secretaria de saúde. Justifique o peso pelo risco de errar, e não por gosto técnico.
+2. Avalie as duas propostas contra os seus critérios, um parágrafo por proposta, dizendo o que cada uma protege e o que ela expõe.
+3. Para cada critério, diga se a evidência disponível permite julgar ou se falta medida. Quando faltar, nomeie a medida que falta.
+4. Emita o parecer: aprovar uma, recusar as duas ou adiar. Se adiar, escreva a condição concreta que encerraria a espera.
+5. Escreva a objeção mais forte contra o seu próprio parecer, e responda a ela.
 
 **Evidência esperada**
 
-O parecer distingue desconhecido de medido.
-
-**Entrega esperada**
-
-Entregue `entregas/unidade-1/avaliacao-leitos/parecer.md` com tabela, recomendação, incertezas, objeção e experiências.
-
-**Critérios de avaliação**
-
-| Critério | Percentual | Evidência e insuficiência |
-| --- | ---: | --- |
-| Critérios anteriores à escolha | 20% | Evidência: tabela anterior; insuficiência: critério criado depois. |
-| Uso honesto de evidências | 25% | Evidência: lacuna declarada; insuficiência: estimativa como medida. |
-| Consequências comparadas | 25% | Evidência: ganhos e custos; insuficiência: somente benefício. |
-| Recomendação revisável | 20% | Evidência: condição e gatilho; insuficiência: conclusão absoluta. |
-| Experimentos alinhados | 10% | Evidência: responde à incerteza; insuficiência: atividade sem pergunta. |
+O parecer traz critérios escritos antes da escolha, as duas propostas julgadas contra eles, a separação explícita entre o que a amostra sustenta e o que ninguém mediu, e uma objeção ao próprio parecer com resposta.
 
 ## Criar
-
 **Objetivo**
 
-Criar uma baseline arquitetural inicial para a plataforma hospitalar que outra equipe consiga ler, executar e revisar nos próximos encontros.
+Propor a estrutura inicial de uma plataforma nova, escolhendo entre três esboços e deixando registrado o que fica de fora por enquanto.
 
 **Situação**
 
-O grupo iniciará o [incremento 1](../projeto-integrador/incrementos.md#incremento-1-estrutura-e-decisoes-iniciais) sem antecipar APIs, serviços, eventos ou infraestrutura.
+Um hospital de médio porte vai construir uma plataforma digital do zero. Na primeira fase, três coisas precisam funcionar: cadastrar o paciente, marcar um procedimento e emitir o comprovante que o paciente leva para casa.
+
+O hospital tem seis pessoas na equipe de desenvolvimento, nenhuma com experiência em sistemas distribuídos. A diretoria quer a primeira versão no ar em quatro meses. O sistema atende cerca de duzentos atendimentos por dia, sem previsão de crescer nos próximos dois anos.
+
+Duas coisas o hospital já sabe que vai querer depois, e não agora: integração com laboratórios externos e um aplicativo para o paciente.
+
+As três funcionalidades da primeira fase, as restrições de equipe, prazo e volume, os dois planos futuros declarados e os três esboços, todos nesta página.
 
 **Seu papel**
 
-Você garante consistência entre cenários, modelos, decisão e evidência.
-
-**Artefato que você irá usar**
-
-Use o contexto integrador, [atributos de qualidade](../referencia/atributos-de-qualidade.md), [template de ADR](../referencia/template-adr.md), Mermaid e `laboratorios/plataforma-hospitalar`.
-
-**Insumos disponíveis**
-
-O projeto fornece domínio; referências estruturam cenários e ADR; Mermaid registra modelos; laboratório produz evidência limitada.
-
-**Antes de executar**
-
-No terminal aberto na raiz do repositório `arquitetura-software`, crie `entregas/unidade-1/baseline-inicial/` com `cenarios`, `modelos`, `decisoes` e `evidencias`. Prepare a [oficina](oficina-de-ferramentas.md) e confirme `3 passed` no teste de estilos.
-
-**Condição inicial verificável**
-
-As quatro subpastas existem em `entregas/unidade-1/baseline-inicial`, e `cd laboratorios/plataforma-hospitalar` seguido do teste termina com `3 passed`.
-
-**Como conduzir**
-
-Produza e conecte cada artefato; revise contradições ao final.
+Você propõe a estrutura inicial. Outra equipe vai continuar o trabalho nos próximos meses, então a proposta precisa ser legível por quem não participou desta conversa.
 
 **O que fazer**
 
-1. Delimite sistema, atores, externos e fora de escopo em `cenarios/escopo.md`.
-2. Escreva três cenários mensuráveis em `cenarios/qualidade.md`.
-3. Compare três alternativas em `decisoes/alternativas.md`.
-4. Modele estrutura e sequência com leitura textual em `modelos/`.
-5. Crie `decisoes/ADR-001.md` com decisão, consequências e revisão.
-6. Salve o teste e sua interpretação em `evidencias/`.
-7. Confira se ADR, modelos e cenários usam os mesmos nomes.
+Escreva em prosa, uma resposta por item.
+
+1. Escolha um dos três esboços e defenda a escolha citando pelo menos duas restrições do hospital.
+2. Sobre os dois esboços que você não escolheu, escreva duas frases cada: o que eles ganhariam e o que custariam a esta equipe, neste prazo.
+3. Escreva um cenário de qualidade para a sua proposta, no formato estímulo, resposta esperada e medida. Um exemplo de forma, com números que não servem para este caso: "quando dez pessoas marcam ao mesmo tempo, a confirmação aparece em até dois segundos em nove de cada dez tentativas".
+4. Diga o que fica explicitamente fora da primeira fase, e por quê.
+5. Os dois planos futuros já são conhecidos. Escreva, para cada um, o sinal que indicaria que chegou a hora de mudar a estrutura escolhida.
 
 **Evidência esperada**
 
-Cadeia legível de escopo → cenário → alternativas → modelos → ADR → teste interpretado.
-
-**Entrega esperada**
-
-Entregue `entregas/unidade-1/baseline-inicial/` com `README.md` de leitura.
-
-**Critérios de avaliação**
-
-| Critério | Percentual | Evidência e insuficiência |
-| --- | ---: | --- |
-| Delimitação e cenários | 20% | Evidência: escopo e medida; insuficiência: cenário vago. |
-| Alternativas comparáveis | 20% | Evidência: consequências para todas; insuficiência: comparação desigual. |
-| Modelos compreensíveis | 20% | Evidência: nomes e texto; insuficiência: modelos contraditórios. |
-| Decisão rastreável | 20% | Evidência: ADR e revisão; insuficiência: decisão solta. |
-| Evidência reproduzível | 15% | Evidência: comando e saída; insuficiência: resultado sem contexto. |
-| Organização da entrega | 5% | Evidência: README orienta; insuficiência: arquivos sem vínculo. |
+O arquivo entregue traz o esboço escolhido com duas restrições citadas, os outros dois avaliados, um cenário de qualidade com medida observável, o escopo excluído com justificativa, e dois sinais de evolução ligados aos planos já conhecidos.

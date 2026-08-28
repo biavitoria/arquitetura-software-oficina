@@ -38,8 +38,8 @@ ao aluno a história de migração dos materiais.
 | `3.7.1 Exercício - Perguntas sobre SAGA e CQRS.md` | `docs/modulo-3-servicos/exercicios.md` | consolidar | Objetivo e modelos de SAGA, problema e cenários de CQRS, decisão em pedidos e evidências. | não usar — o infográfico externo não é necessário; perguntas passarão a ter respostas expansíveis ou roteiro completo. |
 | `3.8 Exemplos de Adoção de Microsserviços.md` | `docs/modulo-3-servicos/estudo-de-caso.md` | referenciar | Casos de Netflix, Amazon, Spotify e Uber como sinais de contexto, equipe, escala e consequências da adoção. | não usar — não há figura de valor didático; casos serão criticados e usados como comparação, não prescrição. |
 | `3.9 O padrão estrangulador.md` | `docs/modulo-3-servicos/padroes-e-decisoes.md` | integrar | Modernização incremental, fachada, roteamento progressivo, coexistência, retirada gradual e riscos de transição. | recriar em Mermaid — etapas da fachada estranguladora serão condensadas em uma sequência acessível de migração hospitalar. |
-| `3.9.1 O caso Netflix.md` | `docs/modulo-3-servicos/estudo-de-caso.md` | referenciar | Modernização, CDN, dados, caos, nuvem e open source como decisões condicionadas por escala e cultura. | não usar — narrativa e referências serão resumidas criticamente; não há diagrama estrutural confiável a preservar. |
-| `3.9.1.1 Discussão sobre o caso Netflix.md` | `docs/modulo-3-servicos/exercicios.md` | consolidar | Risco sistêmico, complexidade, CDN, dados, resiliência, nuvem e estratégia open source. | não usar — não há figura de valor didático; discussão será uma atividade de avaliação com contexto e critérios. |
+| `3.9.1 O caso Netflix.md` | `docs/modulo-3-servicos/casos-reais.md` | reconstruir com fonte primária | Modernização, CDN, dados, caos, nuvem e open source como decisões condicionadas por escala e cultura. | recriar em Mermaid — cadeia de decisões de 2008 a 2016 e separação entre plano de controle na AWS e plano de dados na Open Connect. |
+| `3.9.1.1 Discussão sobre o caso Netflix.md` | `docs/modulo-3-servicos/casos-reais.md` | consolidar | Risco sistêmico, complexidade, CDN, dados, resiliência, nuvem e estratégia open source. | não usar — as sete questões viram leitura guiada ancorada em evidência; a menção a *AlgoX* é descartada por não ter origem verificável. |
 | `3.10 Chassi Arquitetural.md` | `docs/modulo-3-servicos/padroes-e-decisoes.md` | integrar | Preocupações transversais, chassi, integrações progressivas, observabilidade, segurança, ciclo de vida e risco de padronização excessiva. | recriar em Mermaid — o esquema externo será refeito como chassi mínimo, separando capacidades comuns de regras de domínio. |
 | `3.11 Desafios em Sistemas Distribuídos com Serviços.md` | `docs/modulo-3-servicos/conceitos.md` | integrar | CAP, conflitos, balanceamento, hashing consistente, disjuntor, limitação de taxa, monitoramento e observabilidade. | recriar em Mermaid — imagens externas serão convertidas em diagramas de falha, decisão e evidência operacional. |
 | `3.12 O caso de macrosserviços da Uber.md` | `docs/modulo-3-servicos/estudo-de-caso.md` | integrar | Macrosserviços, propriedade de equipe, coesão, redução de dependências e limite da fragmentação excessiva. | não usar — não há figura de valor didático; o caso será contextualizado como contraponto a microsserviços. |
@@ -47,7 +47,7 @@ ao aluno a história de migração dos materiais.
 | `4.1 Arquiteturas Orientadas por Eventos.md` | `docs/modulo-5-eventos/conceitos.md` | integrar | EDA, eventos, produtores, consumidores, intermediários, topologias, payloads, processamento, benefícios, limites e boas práticas. | recriar em Mermaid — a imagem externa será recriada como fluxo de evento laboratorial com contrato e consumidores independentes. |
 | `4.2 Padrões Broker.md` | `docs/modulo-5-eventos/padroes-e-decisoes.md` | integrar | Broker, desacoplamento, filas e tópicos, encaminhamento, responsabilidades e tecnologias como exemplos. | recriar em Mermaid — broker e participantes serão refeitos em Mermaid, preservando a explicação de acoplamento. |
 | `4.3 Padrão Mediator.md` | `docs/modulo-5-eventos/padroes-e-decisoes.md` | integrar | Mediator, coordenação central, regras de interação, comparação com broker, forças e riscos de centralização. | recriar em Mermaid — mediator será comparado ao broker em diagrama de responsabilidade e fluxo. |
-| `4.3.1 Estudo de Caso LinkedIn - Kafka.md` | `docs/modulo-5-eventos/estudo-de-caso.md` | integrar | Evolução de monólito, SOA síncrono, Kafka como backbone, multi-cluster, confiabilidade e governança. | adaptar — as imagens do LinkedIn serão reduzidas a uma linha evolutiva Mermaid e acompanhadas de limites de generalização. |
+| `4.3.1 Estudo de Caso LinkedIn - Kafka.md` | `docs/modulo-5-eventos/casos-reais.md` | reconstruir com fonte primária | Evolução de monólito, SOA síncrono, Kafka como backbone, multi-cluster, confiabilidade e governança. | recriar em Mermaid — as imagens do LinkedIn viram uma linha evolutiva de três fases, acompanhada de limites de generalização. |
 | `4.3.2 As diferenças do Kafka para sistemas como ActiveMQ ou RabbitMQ.md` | `docs/modulo-5-eventos/padroes-e-decisoes.md` | integrar | Log distribuído, retenção, throughput, particionamento, durabilidade, filas e casos de uso de Kafka, ActiveMQ e RabbitMQ. | recriar em Mermaid — quadro comparativo será representado por fluxo e tabela acessível, não por imagem. |
 | `4.4 Caso Prático - Arquitetura de Eventos.md` | `docs/modulo-5-eventos/exemplo-arquitetural.md` | integrar | Produtores, consumidores, tópicos, modelagem C4, análise crítica e entrega de resultados hospitalares. | recriar em Mermaid — topologia de eventos do laboratório será usada como artefato de análise com leitura textual. |
 | `5.1 O estilo da computação em nuvem.md` | `docs/modulo-6-nuvem/conceitos.md` | integrar | IaaS, PaaS, SaaS, on-premise, responsabilidades compartilhadas e comparação de modelos de serviço. | recriar em Mermaid — a matriz externa será recriada para separar modelo de serviço de decisão de implantação. |
@@ -55,8 +55,8 @@ ao aluno a história de migração dos materiais.
 | `5.2.1 Arquitetura de Nuvem com AWS.md` | `docs/modulo-6-nuvem/padroes-e-decisoes.md` | referenciar | Computação, armazenamento, banco, rede, segurança, IA e observabilidade como capacidades de nuvem, não como receita AWS. | adaptar — ícones e diagramas AWS não serão copiados; capacidades serão mapeadas em diagrama neutro com AWS como exemplo contextual. |
 | `5.3 O conceito de conteinerizacao.md` | `docs/modulo-6-nuvem/conceitos.md` | integrar | Virtualização versus contêiner, imagem, contêiner, Docker, Kubernetes, portabilidade e casos de uso. | recriar em Mermaid — comparação VM/contêiner será refeita em diagrama de camadas acessível e ligada ao laboratório local. |
 | `5.4 Orquestracao de conteineres.md` | `docs/modulo-6-nuvem/padroes-e-decisoes.md` | integrar | Orquestração, cluster, réplica, serviço, exposição, escalonamento, Docker Swarm e Kubernetes como alternativas. | recriar em Mermaid — diagramas de Swarm e Kubernetes serão recriados para explicar estado desejado, não tutoriais de fornecedor. |
-| `5.5 Estudo de Caso iFood.md` | `docs/modulo-6-nuvem/estudo-de-caso.md` | referenciar | Migração e evolução em nuvem, capacidades AWS, personalização, classificação de responsabilidades e limites do caso. | não usar — links externos e vídeo serão contextualizados como fonte de análise; não há figura estável a manter. |
-| `5.6 Estudo de Caso TacoBell.md` | `docs/modulo-6-nuvem/estudo-de-caso.md` | referenciar | Serverless, Lambda, comparação com PaaS, SaaS e IaaS, benefícios e limites de arquitetura orientada a eventos. | não usar — vídeo externo será referência opcional; a comparação será escrita no próprio fluxo da unidade. |
+| `5.5 Estudo de Caso iFood.md` | `docs/modulo-6-nuvem/estudo-de-caso.md` | referenciar | Migração e evolução em nuvem, capacidades AWS, personalização, classificação de responsabilidades e limites do caso. | recriar em Mermaid — pré-condições de arquitetura que convertem orquestração em economia; o vídeo externo deixa de ser a fonte central. |
+| `5.6 Estudo de Caso TacoBell.md` | `docs/modulo-6-nuvem/estudo-de-caso.md` | referenciar | Serverless, Lambda, comparação com PaaS, SaaS e IaaS, benefícios e limites de arquitetura orientada a eventos. | recriar em Mermaid — sequência de aceite e efetivação do pedido, que torna visível a separação temporal entre confirmar e registrar. |
 
 ## Regras de uso da matriz
 
@@ -69,6 +69,53 @@ ao aluno a história de migração dos materiais.
   explícitos.
 - Uma decisão de figura não autoriza copiar imagens frágeis. Os diagramas
   recriados devem ter texto alternativo, legenda e leitura textual adjacente.
+- `reconstruir com fonte primária` é o destino das páginas de casos reais: o
+  texto legado deixa de ser a fonte e passa a ser objeto de verificação. Cada
+  afirmação da página canônica precisa de origem publicada pela empresa, pelo
+  fornecedor envolvido ou em artigo revisado por pares, e o que não resistir à
+  verificação é registrado como tal, sem ser silenciosamente removido.
+
+## Página de casos reais em cada módulo
+
+O contrato passou de oito para nove páginas por módulo, com `casos-reais.md`
+entre `estudo-de-caso.md` e `oficina-de-ferramentas.md`. A ordem é deliberada: o
+aluno decide primeiro no caso hospitalar, onde controla as variáveis e pode ser
+cobrado por uma decisão registrada, e só então compara com uma empresa real.
+
+Cada módulo tem exatamente um caso, o que força a escolha do relato que melhor
+ilumina a decisão central daquele encontro:
+
+| Módulo | Caso | Decisão em foco |
+| --- | --- | --- |
+| 1 — Estilos | Amazon Prime Video | granularidade da unidade de distribuição |
+| 2 — APIs | Twitter | a fronteira pública como dependência que não se controla |
+| 3 — Serviços | Netflix | reconstrução na nuvem e falha como estado esperado |
+| 4 — Governança | Knight Capital | implantação, código morto e alerta sem dono |
+| 5 — Eventos | LinkedIn | log distribuído no lugar da cadeia síncrona |
+| 6 — Nuvem | GitLab | backup contra capacidade real de recuperação |
+
+Prime Video, Twitter, Knight Capital e GitLab não têm arquivo correspondente no
+acervo legado; foram pesquisados diretamente na fonte primária. Por isso não
+aparecem na matriz acima, que rastreia apenas o acervo da raiz.
+
+## Formato das páginas de casos reais
+
+A primeira versão dessas páginas era analítica e correlacionava cada caso com a
+plataforma hospitalar. Não funcionou: perdia a narrativa e forçava uma
+correspondência que enfraquecia os dois lados. O formato atual é uma história
+situada no tempo, com as tentativas que não bastaram, e sem qualquer referência
+ao caso condutor da disciplina.
+
+Três regras valem para toda página de caso real, e estão verificadas em
+`tests/test_real_cases.py`:
+
+- **Sem correlação com o hospital.** A palavra não aparece na página. A
+  transferência é trabalho do aluno, não do texto.
+- **Só afirmação com fonte publicada.** O que não tem origem verificável fica de
+  fora, sem virar seção de desmentido. A classificação de fontes está em
+  `docs/referencia/como-ler-um-caso-publico.md`.
+- **Fecho com lente de arquiteto.** Cinco questões que obrigam a reler o caso
+  identificando decisão, alternativas descartadas e evidência.
 
 ## Apêndice — numeração das figuras da Unidade 2
 

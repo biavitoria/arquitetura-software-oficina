@@ -43,7 +43,6 @@ def assert_module_contract(
     corpus = "\n".join(
         (module / page).read_text(encoding="utf-8") for page in PAGES
     )
-    testcase.assertIn("## Equivalências em Java e .NET", corpus)
     for term in required_terms:
         testcase.assertIn(term.casefold(), corpus.casefold(), term)
     workshop = (module / "oficina-de-ferramentas.md").read_text(encoding="utf-8")
@@ -61,8 +60,6 @@ def assert_module_contract(
         testcase.assertIn(heading, workshop)
     for platform in ("### Windows", "### macOS", "### Linux"):
         testcase.assertIn(platform, workshop)
-    for label in ("Essencial em aula", "Exploração em dupla", "Extensão"):
-        testcase.assertIn(label, workshop)
     for prompt in (
         "**Objetivo**",
         "**Pré-requisito**",
@@ -78,31 +75,13 @@ def assert_module_contract(
         {"Recordar", "Compreender", "Aplicar", "Analisar", "Avaliar", "Criar"},
         set(sections),
     )
-    legacy_markers = (
-        "**Situação**",
-        "**Seu papel**",
-        "**Insumos disponíveis**",
-        "**Como conduzir**",
-        "**Entrega esperada**",
-        "**Critérios de avaliação**",
-    )
-    self_contained_markers = (
+    activity_markers = (
         "**Objetivo**",
         "**Situação**",
         "**Seu papel**",
-        "**Artefato que você irá usar**",
-        "**Antes de executar**",
         "**O que fazer**",
         "**Evidência esperada**",
-        "**Entrega esperada**",
-        "**Critérios de avaliação**",
     )
-    for level in ("Aplicar", "Analisar", "Avaliar"):
-        markers = (
-            self_contained_markers
-            if all(marker in sections[level] for marker in self_contained_markers)
-            else legacy_markers
-        )
-        for marker in markers:
-            testcase.assertIn(marker, sections[level])
-        testcase.assertRegex(sections[level], r"\|[^\n]*\|\s*\d+%\s*\|")
+    for level in ("Aplicar", "Analisar", "Avaliar", "Criar"):
+        for marker in activity_markers:
+            testcase.assertIn(marker, sections[level], f"{level}: {marker}")

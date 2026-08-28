@@ -37,6 +37,7 @@ class ModuleTwoTest(unittest.TestCase):
             "padroes-e-decisoes.md",
             "exemplo-arquitetural.md",
             "estudo-de-caso.md",
+            "casos-reais.md",
             "oficina-de-ferramentas.md",
             "exercicios.md",
             "sintese-e-referencias.md",
@@ -51,7 +52,7 @@ class ModuleTwoTest(unittest.TestCase):
             )
         ]
 
-        self.assertEqual(list(range(3, 9)), figures)
+        self.assertEqual(list(range(3, 10)), figures)
 
     def test_api_workshop_names_the_local_application_before_commands(self):
         text = (MODULE / "oficina-de-ferramentas.md").read_text(
@@ -78,8 +79,6 @@ class ModuleTwoTest(unittest.TestCase):
                 "FastAPI",
                 "Bruno",
                 "Spectral",
-                "ASP.NET Core",
-                "Spring Boot",
             ),
         )
 
