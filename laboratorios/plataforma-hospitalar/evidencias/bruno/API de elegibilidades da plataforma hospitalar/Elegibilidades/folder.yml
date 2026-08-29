@@ -1,0 +1,10 @@
+info:
+  name: Elegibilidades
+  type: folder
+
+request:
+  auth: inherit
+
+docs:
+  content: Operações administrativas de elegibilidade.
+  type: text/markdown

@@ -1,0 +1,14 @@
+opencollection: 1.0.0
+
+info:
+  name: API de elegibilidades da plataforma hospitalar
+
+docs:
+  content: Contrato didático para aceitar e recuperar consultas administrativas de elegibilidade. O laboratório mantém dados somente em memória.
+  type: text/markdown
+bundled: false
+extensions:
+  bruno:
+    ignore:
+      - node_modules
+      - .git

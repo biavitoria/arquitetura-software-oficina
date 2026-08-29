@@ -1,0 +1,7 @@
+HTTP/1.1 200 OK
+date: Fri, 28 Aug 2026 23:52:30 GMT
+server: uvicorn
+content-length: 116
+content-type: application/json
+
+{"protocolo":"50d4afc2-a77b-47c8-add6-d3f41fcf41f0","situacao":"recebida","criado_em":"2026-08-28T23:50:52.592491Z"}

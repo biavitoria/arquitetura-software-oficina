@@ -1,0 +1,78 @@
+info:
+  name: Consulta uma elegibilidade aceita
+  type: http
+  seq: 2
+  tags:
+    - Elegibilidades
+
+http:
+  method: GET
+  url: "{{baseUrl}}/elegibilidades/:protocolo"
+  params:
+    - name: protocolo
+      value: ""
+      type: path
+      description: Identificador retornado na aceitação do pedido.
+  auth: inherit
+
+runtime:
+  variables:
+    - name: baseUrl
+      value: http://127.0.0.1:8000
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false
+
+examples:
+  - name: Estado atual
+    request:
+      url: "{{baseUrl}}/elegibilidades/:protocolo"
+      method: GET
+      params:
+        - name: protocolo
+          value: ""
+          type: path
+          description: Identificador retornado na aceitação do pedido.
+    response:
+      status: 200
+      statusText: OK
+      headers:
+        - name: Content-Type
+          value: application/json
+      body:
+        type: json
+        data: |-
+          {
+            "protocolo": "550e8400-e29b-41d4-a716-446655440000",
+            "situacao": "recebida",
+            "criado_em": "2026-07-17T13:30:00Z"
+          }
+  - name: Protocolo desconhecido
+    request:
+      url: "{{baseUrl}}/elegibilidades/:protocolo"
+      method: GET
+      params:
+        - name: protocolo
+          value: ""
+          type: path
+          description: Identificador retornado na aceitação do pedido.
+    response:
+      status: 404
+      statusText: Not Found
+      headers:
+        - name: Content-Type
+          value: application/json
+      body:
+        type: json
+        data: |-
+          {
+            "codigo": "elegibilidade_nao_encontrada",
+            "mensagem": "Protocolo de elegibilidade não encontrado.",
+            "detalhes": []
+          }
+
+docs: Recupera o estado efêmero associado ao protocolo informado.

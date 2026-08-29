@@ -1,0 +1,93 @@
+info:
+  name: Aceita uma consulta de elegibilidade
+  type: http
+  seq: 1
+  tags:
+    - Elegibilidades
+
+http:
+  method: POST
+  url: "{{baseUrl}}/elegibilidades"
+  body:
+    type: json
+    data: |-
+      {
+        "cpf": "12345678901",
+        "codigo_operadora": "OPS-001",
+        "matricula_plano": "MAT-2026-001"
+      }
+  auth: inherit
+
+runtime:
+  variables:
+    - name: baseUrl
+      value: http://127.0.0.1:8000
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false
+
+examples:
+  - name: Protocolo criado (Pedido sintético válido)
+    request:
+      url: "{{baseUrl}}/elegibilidades"
+      method: POST
+      body:
+        type: json
+        data: |-
+          {
+            "cpf": "12345678901",
+            "codigo_operadora": "OPS-001",
+            "matricula_plano": "MAT-2026-001"
+          }
+    response:
+      status: 202
+      statusText: Accepted
+      headers:
+        - name: Content-Type
+          value: application/json
+      body:
+        type: json
+        data: |-
+          {
+            "protocolo": "550e8400-e29b-41d4-a716-446655440000",
+            "situacao": "recebida",
+            "criado_em": "2026-07-17T13:30:00Z"
+          }
+  - name: CPF obrigatório ausente (Pedido sintético válido)
+    request:
+      url: "{{baseUrl}}/elegibilidades"
+      method: POST
+      body:
+        type: json
+        data: |-
+          {
+            "cpf": "12345678901",
+            "codigo_operadora": "OPS-001",
+            "matricula_plano": "MAT-2026-001"
+          }
+    response:
+      status: 422
+      statusText: Unprocessable Entity
+      headers:
+        - name: Content-Type
+          value: application/json
+      body:
+        type: json
+        data: |-
+          {
+            "codigo": "dados_invalidos",
+            "mensagem": "A requisição não atende ao contrato.",
+            "detalhes": [
+              {
+                "campo": "body.cpf",
+                "mensagem": "Field required",
+                "tipo": "missing"
+              }
+            ]
+          }
+
+docs: Valida o pedido, cria um protocolo efêmero e informa onde consultar o recurso aceito.
