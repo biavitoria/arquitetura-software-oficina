@@ -7,12 +7,7 @@ info:
 
 http:
   method: GET
-  url: "{{baseUrl}}/elegibilidades/:protocolo"
-  params:
-    - name: protocolo
-      value: ""
-      type: path
-      description: Identificador retornado na aceitação do pedido.
+  url: "{{baseUrl}}/elegibilidades/c01779d7-ee45-4a39-aa10-e15075c5c8e5"
   auth: inherit
 
 runtime:
