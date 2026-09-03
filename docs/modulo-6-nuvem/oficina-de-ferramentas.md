@@ -12,20 +12,125 @@ Os manifestos expressam o estado inicial, antes de serem aplicados ao cluster: `
 
 As probes deixam a condição observável. `readiness` consulta `/health/ready` e mantém um Pod fora dos endpoints enquanto ele não pode receber tráfego. `liveness` consulta `/health/live` para permitir reinício de um processo travado; ela não deve depender de banco ou de uma API remota. O estado inicial esperado é: nenhum recurso do namespace `hospital` aplicado, nenhuma imagem no nó kind e nenhum contexto `kind-hospital-local` até que o cluster seja criado e a imagem seja carregada.
 
+### O que você vai observar, e por que importa
+
+| O que a oficina mostra | O conceito do módulo |
+| --- | --- |
+| A imagem é imutável e a revisão fica registrada | [Contêiner, imagem e orquestração](conceitos.md#conteiner-imagem-e-orquestracao) |
+| Duas réplicas atendendo, nenhuma guardando estado próprio | [Stateless, stateful e os doze fatores](padroes-e-decisoes.md#stateless-stateful-e-os-doze-fatores) |
+| A faixa de réplicas é declarada uma vez e ajustada pelo cluster | [Elasticidade e escalabilidade](padroes-e-decisoes.md#elasticidade-e-escalabilidade) |
+| A atualização troca Pods sem derrubar o serviço | [Resiliência, rollout e rollback](padroes-e-decisoes.md#resiliencia-rollout-e-rollback) |
+| Duas verificações de saúde com finalidades distintas | [Região, zona e fronteiras de falha](conceitos.md#regiao-zona-e-fronteiras-de-falha) |
+
+### Onde cada arquivo mora
+
+Todos os comandos rodam a partir de `laboratorios/plataforma-hospitalar`.
+
+```text
+plataforma-hospitalar/
+├── Dockerfile                    ← receita da imagem imutável
+└── infra/
+    ├── kind/cluster.yaml         ← define o cluster local descartável
+    └── k8s/
+        ├── namespace.yaml        a fronteira lógica "hospital"
+        ├── configmap.yaml        configuração externa ao código
+        ├── deployment.yaml       ← o manifesto central: réplicas, recursos e probes
+        ├── service.yaml          o endereço estável na frente dos Pods
+        └── hpa.yaml              a faixa de réplicas para escala automática
+```
+
+| Arquivo | O que ele faz |
+| --- | --- |
+| [`Dockerfile`](https://github.com/marco-mendes/arquitetura-software/blob/main/laboratorios/plataforma-hospitalar/Dockerfile) | Descreve como produzir a imagem: parte de Python 3.12, instala a aplicação e cria um usuário sem privilégios. |
+| [`infra/kind/cluster.yaml`](https://github.com/marco-mendes/arquitetura-software/blob/main/laboratorios/plataforma-hospitalar/infra/kind/cluster.yaml) | Declara o cluster local com um nó de controle e o mapeamento de porta para a sua máquina. |
+| [`infra/k8s/deployment.yaml`](https://github.com/marco-mendes/arquitetura-software/blob/main/laboratorios/plataforma-hospitalar/infra/k8s/deployment.yaml) | Pede duas réplicas, declara pedido e teto de recursos, e define as duas verificações de saúde. |
+| [`infra/k8s/service.yaml`](https://github.com/marco-mendes/arquitetura-software/blob/main/laboratorios/plataforma-hospitalar/infra/k8s/service.yaml) | Dá um endereço estável a um conjunto de Pods que nascem e morrem. |
+| [`infra/k8s/hpa.yaml`](https://github.com/marco-mendes/arquitetura-software/blob/main/laboratorios/plataforma-hospitalar/infra/k8s/hpa.yaml) | Declara a faixa de duas a cinco réplicas, conforme a carga. |
+
 ## Ferramentas e evidências
 
-| Ferramenta | Papel | Evidência observável |
+| Ferramenta | O que é | Para que serve aqui |
 | --- | --- | --- |
-| Docker Engine/Desktop | construir a imagem local | `docker image inspect hospital-api:1.0.0` |
-| kind | criar Kubernetes em contêineres | `kind get clusters` |
-| kubectl | aplicar e observar estado declarado | rollout, Pods, eventos e Service |
-| Kubernetes | reconciliar Deployment, Service e HPA | duas réplicas prontas e revisão registrada |
+| **Docker Engine** | Executa contêineres, já usado nos módulos 3 e 4. | Construir a imagem da aplicação. |
+| **Kubernetes** | Um orquestrador de contêineres: recebe uma descrição do estado desejado e trabalha continuamente para que a realidade corresponda a ela. | Manter duas réplicas no ar, substituir as que falham e trocar versões sem derrubar o serviço. |
+| **kind** | Sigla de *Kubernetes in Docker*: cria um cluster Kubernetes completo dentro de contêineres, na sua máquina. | Ter um cluster descartável sem nuvem nem custo. |
+| **kubectl** | O programa de linha de comando que conversa com o Kubernetes. | Aplicar os manifestos e observar o que o cluster fez com eles. |
 
-O repositório contém `infra/kind/cluster.yaml` e os cinco manifests em `infra/k8s`. O Service NodePort 30080 é mapeado pelo kind somente em `127.0.0.1:18080`. O HPA pode exibir `<unknown>` sem Metrics Server; isso não impede a lição sobre requests, limits e configuração declarativa.
+Três termos aparecem em cada comando adiante. Um **Pod** é a menor unidade que o Kubernetes executa, envolvendo um ou mais contêineres que compartilham rede e armazenamento. Um **Deployment** declara quantas réplicas de um Pod devem existir e como substituí-las ao trocar de versão. E um **manifesto** é o arquivo YAML que descreve o estado desejado de um desses objetos.
+
+Cada ferramenta deixa uma evidência própria, e vale saber de antemão qual comando comprova o quê: `docker image inspect hospital-api:1.0.0` confirma que a imagem existe localmente, `kind get clusters` lista os clusters criados, e `kubectl` mostra o estado que o cluster alcançou depois de receber os manifestos.
+
+A diferença que dá sentido à oficina inteira: você não vai mandar o Kubernetes criar dois Pods. Você vai **declarar que devem existir dois**, e ele passa a garantir isso. Apagar um Pod à mão faz o orquestrador criar outro, e é esse comportamento que se chama reconciliação.
+
+O Service usa uma porta fixa mapeada pelo kind apenas em `127.0.0.1:18080`. A escala automática pode exibir `<unknown>` na coluna de métricas quando o cluster não tem coletor instalado; isso não impede a lição sobre pedidos de recurso, tetos e configuração declarativa.
+
+## O `deployment.yaml` linha a linha
+
+Este é o manifesto onde estão quase todas as decisões da oficina. Vale lê-lo antes de aplicá-lo, porque cada bloco corresponde a um conceito do módulo.
+
+O primeiro bloco declara quantas cópias devem existir e como trocá-las de versão:
+
+```yaml
+spec:
+  replicas: 2                    # o estado desejado: sempre duas
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0          # nunca fique com menos de 2 atendendo
+      maxSurge: 1                # pode subir 1 a mais durante a troca
+```
+
+A combinação `maxUnavailable: 0` com `maxSurge: 1` é uma decisão de disponibilidade, escrita como configuração. Ela diz: durante uma atualização, crie primeiro o Pod novo, espere que ele fique pronto, e só então remova o antigo. O cluster chega a ter três Pods por instantes, e nunca menos que dois atendendo. Trocar `maxUnavailable` para `1` tornaria a atualização mais rápida e aceitaria uma janela de capacidade reduzida.
+
+O segundo bloco declara o que cada réplica precisa de recursos:
+
+```yaml
+          resources:
+            requests:            # o que o Pod precisa para ser agendado
+              cpu: 100m
+              memory: 128Mi
+            limits:              # o teto que ele não pode ultrapassar
+              cpu: 250m
+              memory: 256Mi
+```
+
+A distinção entre pedido e teto costuma confundir, e as consequências são bem diferentes. O **pedido** é usado para decidir em qual nó o Pod cabe: o Kubernetes só o agenda onde houver 100 milicores livres. O **teto** é o que o Pod não pode ultrapassar em execução; exceder o teto de memória faz o contêiner ser encerrado.
+
+Declarar os dois é o que permite ao orquestrador distribuir carga sem que um serviço consuma a máquina inteira, e é a base sobre a qual a escala automática decide acrescentar réplicas.
+
+O terceiro bloco declara duas verificações de saúde que parecem iguais e respondem perguntas opostas:
+
+```yaml
+          readinessProbe:              # "posso receber tráfego?"
+            httpGet:
+              path: /health/ready
+            periodSeconds: 3
+
+          livenessProbe:               # "ainda estou vivo?"
+            httpGet:
+              path: /health/live
+            periodSeconds: 5
+```
+
+Reprovar na verificação de **prontidão** tira o Pod da lista de destinos do Service, sem reiniciá-lo: ele continua vivo, apenas deixa de receber requisições até se recuperar. Reprovar na de **vitalidade** faz o Kubernetes reiniciar o contêiner, por concluir que ele travou.
+
+Confundir as duas produz um defeito clássico. Se a verificação de vitalidade consultasse o banco de dados, uma lentidão no banco reiniciaria todos os Pods em cadeia, transformando um problema de dependência numa queda geral. É por isso que `/health/live` responde sem consultar nada externo, enquanto `/health/ready` pode ser mais exigente.
+
+O Service, por sua vez, resolve outro problema:
+
+```yaml
+spec:
+  type: NodePort
+  selector:
+    app: hospital-api            # encontra Pods por rótulo, não por endereço
+  ports:
+    - port: 8000
+      nodePort: 30080
+```
+
+Pods são efêmeros: nascem, morrem e trocam de endereço a cada substituição. O `selector` por rótulo é o que dá estabilidade ao conjunto — qualquer Pod marcado como `app: hospital-api` entra automaticamente no balanceamento, e quem chama nunca precisa saber quantos são nem onde estão.
 
 ## Pré-requisitos
-
-### Essencial em aula
 
 **Objetivo**
 
@@ -92,8 +197,6 @@ Se o socket recusar acesso, aplique a orientação oficial da distribuição. N�
 
 ## Preparação do laboratório
 
-### Essencial em aula
-
 **Objetivo**
 
 Validar manifests, criar o cluster e disponibilizar a imagem dentro dele.
@@ -135,8 +238,6 @@ O dry-run confirma sintaxe aceita pelo cliente; ele não executa Pods. A sequên
 - Por que `IfNotPresent` faz sentido para a imagem carregada no kind?
 - Que evidência adicional uma CI produziria para uma imagem de produção?
 
-### Exploração em dupla
-
 **Objetivo**
 
 Ler o estado desejado antes de aplicá-lo.
@@ -147,7 +248,7 @@ Abra `infra/k8s/deployment.yaml`, `service.yaml`, `hpa.yaml` e `infra/kind/clust
 
 **Execute**
 
-Uma pessoa localiza labels e selector; a outra localiza porta, resources, readiness, liveness, `RollingUpdate` e faixa do HPA. Troquem as explicações e formulem uma hipótese para cada valor.
+Localize nos manifestos os rótulos e o seletor que ligam o Service aos Pods. Depois localize a porta, os recursos, as duas verificações de saúde, a estratégia `RollingUpdate` e a faixa de réplicas, formulando uma hipótese para cada valor escolhido.
 
 **Observe**
 
@@ -163,8 +264,6 @@ Compare um Pod existente com um Pod pronto: somente o pronto deve receber tráfe
 - Por que duas réplicas no kind não equivalem a duas zonas?
 
 ## Execução
-
-### Essencial em aula
 
 **Objetivo**
 
@@ -206,8 +305,6 @@ Compare `kubectl get pods` com `curl`: o primeiro descreve estado do cluster; o 
 
 - Que sinal complementar mostraria que o endpoint ainda atende com uma réplica fora?
 - Como requests de CPU participam do cálculo de utilização do HPA?
-
-### Exploração em dupla
 
 **Objetivo**
 
@@ -251,8 +348,6 @@ Compare falha de imagem (nem inicia) com falha de readiness (inicia, mas não en
 
 - Que parte de uma migração de banco `rollout undo` não desfaria?
 - Qual política de CI evitaria chegar a uma tag inexistente?
-
-### Extensão
 
 **Objetivo**
 

@@ -8,42 +8,42 @@ As propostas usam o caso hospitalar e dados sintéticos. Não há resposta únic
 
 **Situação**
 
-Uma equipe recebeu os nomes `ResultadoLaboratorialDisponibilizado.v1`, `GerarCobranca`, `hospital.events`, `billing.resultados.v1`, `hospital.events.dlx` e `billing.resultados.v1.dlq`, mas mistura intenção de domínio e elemento de transporte.
+Você acabou de entrar como arquiteta numa equipe que está migrando a integração entre Resultados e Faturamento de chamadas diretas para mensageria. Ao herdar o código e as conversas já em andamento, você encontra seis nomes espalhados pelo repositório, sem nenhum glossário que diga o que cada um significa: `ResultadoLaboratorialDisponibilizado.v1`, `GerarCobranca`, `hospital.events`, `billing.resultados.v1`, `hospital.events.dlx` e `billing.resultados.v1.dlq`. Numa reunião recente, dois desenvolvedores gastaram dez minutos discutindo se `GerarCobranca` era algo que já tinha acontecido ou um pedido para alguém fazer algo — e a discussão só terminou porque o horário da reunião acabou, não porque alguém convenceu o outro.
 
 **Seu papel**
 
-Você prepara um glossário de entrada para a equipe.
+Você prepara um glossário curto, que vai virar a referência oficial da equipe a partir de agora.
 
-1\. Defina evento, comando, mensagem, broker, mediator, fila, tópico e log distribuído.
+1\. Qual é a diferença essencial entre um broker e um mediator?
 
 <details>
 <summary>Ver resposta</summary>
 
-Evento afirma fato; comando pede ação; mensagem transporta. Broker distribui; mediator coordena. Fila reparte trabalho; tópico copia; log retém leituras.
+Um broker distribui mensagens entre produtor e consumidor sem decidir nada sobre a ordem ou o sentido de negócio do fluxo; ele só roteia. Um mediator conhece o processo inteiro, decide a sequência dos passos e coordena os participantes — assume, de propósito, a decisão que o broker se recusa a tomar.
 </details>
 
-2\. Relacione cada nome da situação a uma definição.
+2\. Como se nomeia corretamente um evento? E um comando? Dê um exemplo de cada, usando o domínio da situação acima.
 
 <details>
 <summary>Ver resposta</summary>
 
-`ResultadoLaboratorialDisponibilizado.v1` é evento; `GerarCobranca`, comando. A exchange publica; a fila trabalha; DLX e DLQ recebem rejeições.
+Um evento é nomeado no particípio passado, porque afirma um fato já ocorrido: `ResultadoLaboratorialDisponibilizado` segue esse padrão. Um comando é nomeado no infinitivo ou como uma ordem direta, porque pede uma ação a alguém: `GerarCobranca` segue esse padrão. Nomear um comando no particípio (como se já tivesse acontecido) é exatamente o tipo de erro que gerou a discussão de dez minutos da situação.
 </details>
 
-3\. Defina entrega pelo menos uma vez, idempotência, ordenação e dead-letter queue.
+3\. Classifique cada um dos seis nomes da situação (`ResultadoLaboratorialDisponibilizado.v1`, `GerarCobranca`, `hospital.events`, `billing.resultados.v1`, `hospital.events.dlx` e `billing.resultados.v1.dlq`) numa das categorias evento, comando, exchange de domínio, fila de trabalho, exchange de dead-letter ou fila de dead-letter.
 
 <details>
 <summary>Ver resposta</summary>
 
-Entrega pode repetir; idempotência contém o efeito. Ordem exige chave e fronteira. DLQ guarda rejeições para decisão controlada.
+`ResultadoLaboratorialDisponibilizado.v1` é evento, pelo particípio e pela versão explícita. `GerarCobranca` é comando, pelo verbo no infinitivo pedindo uma ação. `hospital.events` é a exchange de domínio, pelo nome genérico do canal. `billing.resultados.v1` é a fila de trabalho de um consumidor específico. `hospital.events.dlx` é a exchange de dead-letter, pelo sufixo `.dlx`. `billing.resultados.v1.dlq` é a fila de dead-letter correspondente, pelo sufixo `.dlq`.
 </details>
 
-4\. Dê um exemplo de consequência se dois termos forem confundidos.
+4\. Defina, numa frase cada, entrega pelo menos uma vez, idempotência, ordenação e dead-letter queue.
 
 <details>
 <summary>Ver resposta</summary>
 
-Confundir ack com cobrança permite nova cobrança após queda e redelivery.
+Entrega pelo menos uma vez admite que a mesma mensagem chegue mais de uma vez. Idempotência é a propriedade que faz repetir a mensagem não repetir o efeito de negócio. Ordenação exige declarar qual sequência importa e sob qual chave. Dead-letter queue é a fila que guarda mensagens rejeitadas para decisão controlada, sem apagá-las.
 </details>
 
 ## Compreender
@@ -58,36 +58,36 @@ Uma pessoa afirma que, se RabbitMQ confirmar a publicação, Faturamento nunca v
 
 Você explica o ciclo de falha e propõe linguagem correta para a equipe.
 
-1\. Descreva uma queda entre escrita local e confirmação ao broker.
+1\. Descreva, em uma sequência de passos concreta, o que acontece quando o consumidor de Faturamento grava o efeito de uma cobrança no SQLite e o processo cai antes de confirmar a mensagem ao RabbitMQ. Explique o que o broker faz a seguir com aquela mensagem e por que ele não tem nenhuma forma de saber que o efeito já havia sido registrado do outro lado.
 
 <details>
 <summary>Ver resposta</summary>
 
-O consumidor grava no SQLite, cai antes do ack e recebe o mesmo `event_id` novamente.
+O consumidor recebe a mensagem, grava a linha em `billing_effects` e cai antes de enviar o ack ao RabbitMQ. Da perspectiva do broker, a mensagem nunca foi confirmada, então ela permanece disponível e é reentregue quando o consumidor volta ao ar. O broker não tem acesso ao SQLite do consumidor: ele só sabe se recebeu ou não uma confirmação, e por isso reentrega por precaução em vez de assumir que o trabalho foi concluído.
 </details>
 
-2\. Explique por que a repetição protege contra perda em vez de ser sempre defeito.
+2\. A pessoa da situação, que propôs ignorar todos os redeliveries, está tentando resolver um problema real com a ferramenta errada. Explique por que a entrega repetida é uma consequência necessária de garantir que nenhuma mensagem se perca diante de falhas ambíguas como a do item anterior, e diga o que a equipe perderia de fato se simplesmente desligasse o redelivery em vez de tratar a repetição.
 
 <details>
 <summary>Ver resposta</summary>
 
-Sem reentrega, confirmação perdida pode virar trabalho perdido; idempotência contém a repetição.
+O broker não consegue distinguir "o consumidor processou e a confirmação se perdeu na rede" de "o consumidor nunca processou": as duas situações parecem idênticas do lado de fora. Reentregar é a escolha segura porque assume o cenário mais caro, que é perder trabalho, em vez do cenário mais raro, que é duplicar uma confirmação. Desligar o redelivery trocaria duplicidade visível, que a idempotência resolve, por perda silenciosa de resultados de exame, que nenhum mecanismo do laboratório detecta.
 </details>
 
-3\. Diferencie tentativa, confirmação e efeito de negócio.
+3\. No log do consumidor de Faturamento aparece a linha `processed=False attempts=2` para um `event_id` que já tinha gerado efeito antes, mas a tabela `billing_effects` mostra só uma linha de cobrança para essa mesma identidade. Um colega, olhando só a linha do log, conclui que há um bug porque "a mensagem foi processada duas vezes". Usando esse log e essa tabela como evidência, diferencie tentativa, confirmação e efeito de negócio, e explique por que a conclusão do colega está errada.
 
 <details>
 <summary>Ver resposta</summary>
 
-Tentativa é processamento visto; ack encerra entrega; cobrança é efeito. Duas tentativas podem produzir uma cobrança.
+Tentativa é cada vez que o consumidor viu a mensagem e registrou isso em `processed_events`; confirmação é o ack enviado ao broker, que encerra a entrega daquela cópia específica; efeito de negócio é a linha em `billing_effects`, que só existe na primeira vez. O colega confundiu tentativa com efeito: `attempts=2` conta quantas vezes o consumidor viu aquele `event_id`, contagem que cresce a cada entrega repetida, enquanto `billing_effects` registra o efeito de negócio, que a mesma transação garante existir uma única vez. A tabela com uma única linha é exatamente a evidência de que o sistema funcionou como projetado.
 </details>
 
-4\. Explique por que `event_id` e uma restrição durável ajudam.
+4\. Alguém na equipe propõe resolver a duplicidade guardando os `event_id` já vistos num `set()` em memória, dentro do próprio processo Python do consumidor, em vez de gravar cada tentativa no SQLite. Explique por que essa alternativa falha na primeira vez que o serviço reinicia ou que uma segunda réplica do consumidor entra no ar, e diga o que ter `event_id` como chave primária durável resolve que o `set()` em memória não resolve.
 
 <details>
 <summary>Ver resposta</summary>
 
-`event_id` une tentativas; restrição única durável bloqueia efeito repetido após reinício ou réplica.
+Um `set()` em memória existe só enquanto o processo está vivo: um reinício zera o histórico de `event_id` vistos, e uma segunda réplica começa com o próprio `set()` vazio, sem conhecimento do que a primeira já processou. `event_id` como chave primária numa tabela durável sobrevive a reinício e é compartilhada entre réplicas que apontam para o mesmo banco, porque a garantia passou a ser uma propriedade dos dados, não uma variável de um processo específico.
 </details>
 
 ## Aplicar
@@ -129,7 +129,7 @@ Você é a pessoa arquiteta responsável pela recomendação. A equipe implement
 
 **O que fazer**
 
-Escreva em prosa, uma resposta por item. Não é preciso desenhar nada.
+Escreva em texto corrido, uma resposta por item. Não é preciso desenhar nada.
 
 1. Recomende uma das quatro alternativas, em uma frase.
 2. Sobre cada uma das quatro, escreva duas frases: o que ela resolve do problema descrito e o que ela cobra em troca.
@@ -172,7 +172,7 @@ Você conduz a investigação antes de qualquer correção. Reiniciar o consumid
 
 **O que fazer**
 
-Escreva em prosa, uma resposta por item.
+Escreva em texto corrido, uma resposta por item.
 
 1. Escreva duas hipóteses diferentes que explicam o crescimento da fila, e diga que sinal disponível separaria uma da outra.
 2. O fato 3 tornou um campo opcional. Explique por que uma mudança que afrouxa uma regra pode quebrar um consumidor, em vez de facilitar a vida dele.
@@ -222,7 +222,7 @@ Você emite o parecer sobre como atender a Qualidade sem prejudicar os dois cons
 
 **O que fazer**
 
-Escreva em prosa, uma resposta por item.
+Escreva em texto corrido, uma resposta por item.
 
 1. Declare de três a quatro critérios de julgamento e diga qual pesa mais, justificando pelo risco de errar.
 2. Avalie os três mecanismos contra os seus critérios, um parágrafo por mecanismo, dizendo o que cada um resolve e o que cobra.
@@ -274,7 +274,7 @@ Você propõe o caminho de evolução. A proposta será executada por três equi
 
 **O que fazer**
 
-Escreva em prosa, uma resposta por item.
+Escreva em texto corrido, uma resposta por item.
 
 1. Escolha um dos três caminhos e defenda a escolha citando pelo menos duas das quatro restrições.
 2. Sobre os dois caminhos que você não escolheu, escreva duas frases cada: o que ganhariam e o que custariam.
