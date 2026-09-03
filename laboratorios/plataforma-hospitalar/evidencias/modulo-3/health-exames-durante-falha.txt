@@ -1,0 +1,7 @@
+HTTP/1.1 200 OK
+date: Thu, 03 Sep 2026 18:26:16 GMT
+server: uvicorn
+content-length: 34
+content-type: application/json
+
+{"status":"ok","servico":"exames"}
